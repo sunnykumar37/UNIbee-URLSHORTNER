@@ -1,0 +1,24 @@
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f0f2f5; /* Light grey background for the overall page */
+}
+
+.dashboard-content-area {
+  display: flex;
+  flex: 1; /* Allows this area to take up remaining height */
+}
+
+.dashboard-main-content {
+  flex: 1; /* Allows main content to take up remaining width */
+  padding: 20px; /* Add some padding around the main content */
+  overflow-y: auto; /* Add scrolling if content overflows */
+}
+
+/* Basic responsive adjustment */
+@media (max-width: 768px) {
+  .dashboard-content-area {
+    flex-direction: column; /* Stack sidebar and main content on smaller screens */
+  }
+} 

@@ -1,0 +1,164 @@
+.sidebar {
+  width: 250px;
+  background-color: #111827; /* Slate-900 vibe */
+  color: #F9FAFB; /* Slate-100 */
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar-header {
+  font-size: 1.6rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 0 20px;
+  color: #60A5FA; /* Tailwind blue-400 */
+}
+
+.sidebar-logo {
+  text-decoration: none;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #60A5FA;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.sidebar-nav li {
+  margin-bottom: 4px;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: #CBD5E1; /* Slate-300 */
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+}
+
+.sidebar-nav a:hover {
+  background-color: #1E293B; /* Slate-800 */
+  color: #FFFFFF;
+  border-left: 3px solid #60A5FA;
+  transform: translateX(5px);
+}
+
+.sidebar-nav a.active {
+  background-color: #1D4ED8; /* Blue-700 */
+  color: #ffffff;
+  border-left: 3px solid #60A5FA;
+  font-weight: 500;
+}
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #60A5FA;
+  transition: transform 0.2s ease-in-out;
+}
+
+.sidebar-nav a:hover .sidebar-icon {
+  transform: scale(1.2);
+}
+
+.item-count {
+  background-color: #3B82F6; /* Blue-500 */
+  color: white;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  margin-left: auto;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sidebar-nav a:hover .item-count {
+  background-color: #2563EB; /* Blue-600 */
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #334155; /* Slate-700 */
+  text-align: center;
+}
+
+.sign-out-button {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #EF4444; /* Red-500 */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.sign-out-button:hover {
+  background-color: #DC2626; /* Red-600 */
+  transform: scale(1.02);
+}
+
+.main-content {
+  margin-left: 274px;
+  padding: 24px;
+  background-color: #0F172A; /* Deep dark base */
+  min-height: 100vh;
+  color: #F8FAFC; /* Slate-100 */
+}
+
+/* Settings Dropdown Toggle (button) should look like a sidebar link */
+.sidebar-dropdown-toggle > button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 2px;
+  text-decoration: none;
+  color: #CBD5E1;
+  font-size: 1rem;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.sidebar-dropdown-toggle > button:hover {
+  background-color: #1E293B;
+  color: #FFFFFF;
+  border-left: 3px solid #60A5FA;
+  transform: translateX(5px);
+}
+
+.sidebar-dropdown-toggle > button.active,
+.sidebar-dropdown-toggle.active > button {
+  background-color: #1D4ED8;
+  color: #ffffff;
+  border-left: 3px solid #60A5FA;
+  font-weight: 500;
+}
