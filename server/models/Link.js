@@ -22,8 +22,8 @@ const LinkSchema = new mongoose.Schema({
     default: Date.now
   },
   expiresAt: {
-    type: Date,
-    default: () => new Date(Date.now() + 30 * 60 * 1000) // 30 minutes from creation
+    type: Date
+    // No default, so links never expire unless set
   },
   clicks: [ClickSchema],
   isActive: {

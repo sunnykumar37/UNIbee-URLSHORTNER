@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -39,19 +39,19 @@ export default function HomePage() {
     { name: "Unknown", value: 0 },
   ]);
 
-  // Move fetchSummary outside useEffect so it can be called after QR creation
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const res = await axios.get("http://localhost:5000/api/links/summary-analytics", {
+      const res = await fetch("http://localhost:5000/api/links/summary-analytics", {
         headers: { "x-auth-token": token },
       });
+      const data = await res.json();
       setBarData([
-        { name: "Short Links", value: res.data.shortLinksCount },
-        { name: "QR Codes", value: res.data.qrCodesCount },
+        { name: "Short Links", value: data.shortLinksCount },
+        { name: "QR Codes", value: data.qrCodesCount },
       ]);
-      setPieData(res.data.deviceData);
+      setPieData(data.deviceData);
     } catch (err) {
       setBarData([
         { name: "Short Links", value: 0 },
@@ -64,11 +64,11 @@ export default function HomePage() {
         { name: "Unknown", value: 0 },
       ]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSummary();
-  }, []);
+  }, [fetchSummary]);
 
   const handleQuickCreate = async (e) => {
     e.preventDefault();

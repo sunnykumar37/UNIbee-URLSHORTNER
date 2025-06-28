@@ -12,7 +12,10 @@ const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const Link = require("./models/Link");
 const passport = require("passport");
 const QrCode = require("./models/QrCode");
+const { isAuthenticated } = require("./middleware/auth");
 const app = express();
+const router = express.Router();
+
 app.use(cookieParser());
 app.use(passport.initialize());
 // 🛠 Middlewares
@@ -48,8 +51,6 @@ mongoose
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/links", require("./routes/links"));
 
-
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
@@ -61,8 +62,25 @@ cloudinary.config({
 });
 
 // ✅ POST /api/upload-qr
-router.post("/", upload.single("qrImage"), async (req, res) => {
+app.post("/api/upload-qr", upload.single("qrImage"), async (req, res) => {
   try {
+    // Handle authentication from FormData token
+    const token = req.body.token;
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    // Verify token and get user ID (matching isAuthenticated middleware)
+    const jwt = require('jsonwebtoken');
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded.id; // Set to user ID like isAuthenticated does
+    } catch (err) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    console.log('Creating QR code for user:', req.user);
     const fileBuffer = req.file.buffer;
     const { text } = req.body;
 
@@ -74,11 +92,13 @@ router.post("/", upload.single("qrImage"), async (req, res) => {
       }).end(fileBuffer);
     });
 
-    const newQR = new QRCode({
+    // Debug log before saving
+    console.log('Saving QR code:', { user: req.user, text, cloudinaryUrl: result.secure_url });
+    const newQR = new QrCode({
+      user: req.user,
       text,
       cloudinaryUrl: result.secure_url,
     });
-
     await newQR.save();
 
     res.json(newQR);
@@ -87,8 +107,6 @@ router.post("/", upload.single("qrImage"), async (req, res) => {
     res.status(500).json({ message: "Upload failed", error: err.message });
   }
 });
-
-
 
 // 🔁 Redirect Handler (/s/:shortCode)
 app.get("/s/:shortCode", async (req, res) => {
@@ -130,7 +148,28 @@ app.get("/s/:shortCode", async (req, res) => {
   }
 });
 
-// 🌐 Serve React Frontend
+// ✅ GET /api/qrcodes - fetch all QR codes
+app.get('/api/qrcodes', async (req, res) => {
+  try {
+    const qrcodes = await QrCode.find();
+    res.json(qrcodes);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch QR codes' });
+  }
+});
+
+// ✅ DELETE /api/qrcodes/:id - delete a QR code by ID
+app.delete('/api/qrcodes/:id', async (req, res) => {
+  try {
+    const deleted = await QrCode.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'QR code not found' });
+    res.json({ message: 'QR code deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete QR code' });
+  }
+});
+
+// 🌐 Serve React Frontend (should be last)
 app.use(express.static(path.join(__dirname, "../client/build")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../client/build", "index.html"));

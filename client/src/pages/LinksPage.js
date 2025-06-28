@@ -5,6 +5,7 @@ import copy from 'copy-to-clipboard'; // Import copy function
 import { useDashboard } from '../context/DashboardContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Dashboard.css'; // Import the new CSS file
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Helper to fetch page title from a URL
 async function fetchPageTitle(url) {
@@ -333,8 +334,10 @@ export default function LinksPage() { // Renamed component
                     {link.title || 'Untitled'}
                   </div>
                   <div style={{ fontWeight: 500, fontSize: 16, color: '#2563eb', marginBottom: 2 }}>
-                    {/* Ensure this is a pure HTML link to leverage browser navigation */}
-                    <a href={link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb' }}>{link.shortenedUrl}</a>
+                    {/* Show UNIbee as the domain, but keep the real link */}
+                    <a href={link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb' }}>
+                      {link.shortenedUrl.replace('http://localhost:5000', 'UNIbee')}
+                    </a>
                   </div>
                   <div style={{ color: '#444', fontSize: 15, marginBottom: 8, wordBreak: 'break-all' }}>
                     <a href={link.originalUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#444', textDecoration: 'underline' }}>{link.originalUrl}</a>
