@@ -138,7 +138,7 @@ export default function PageEditor() {
                     </>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <QRCode value={item.value} size={80} level="H" />
+                      <QRCode value={item.value.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')} size={80} level="H" />
                       <p style={{ fontSize: 14, wordBreak: 'break-all' }}>{item.text}</p>
                     </div>
                   )}

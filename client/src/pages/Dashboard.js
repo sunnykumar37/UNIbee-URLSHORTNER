@@ -144,12 +144,12 @@ export default function Dashboard() {
               <li key={link._id} className="link-item">
                 <p>Original: <a href={link.originalUrl} target="_blank" rel="noopener noreferrer">{link.originalUrl}</a></p>
                 <p>Shortened: 
-                  <a href={link.shortenedUrl} target="_blank" rel="noopener noreferrer">{link.shortenedUrl}</a>
+                  <a href={link.shortenedUrl} target="_blank" rel="noopener noreferrer">{link.shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')}</a>
                   <button onClick={() => handleCopyClick(link.shortenedUrl)} style={{ marginLeft: '10px' }}>Copy</button>
                 </p>
                 {/* QR Code */}
                 <div style={{ marginTop: '10px' }}>
-                  <QRCode value={link.shortenedUrl} size={128} level="H" />
+                  <QRCode value={link.shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')} size={128} level="H" />
                 </div>
               </li>
             ))}

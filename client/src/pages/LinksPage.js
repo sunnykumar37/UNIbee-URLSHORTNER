@@ -343,7 +343,7 @@ export default function LinksPage() { // Renamed component
                   <div style={{ fontWeight: 500, fontSize: 16, color: '#2563eb', marginBottom: 2 }}>
                     {/* Show UNIbee as the domain, but keep the real link */}
                     <a href={link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb' }}>
-                      {link.shortenedUrl.replace('http://localhost:5000', 'UNIbee')}
+                      {link.shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')}
                     </a>
                   </div>
                   <div style={{ color: '#444', fontSize: 15, marginBottom: 8, wordBreak: 'break-all' }}>
@@ -406,7 +406,7 @@ export default function LinksPage() { // Renamed component
             <div className="flex flex-col items-center">
               <div className="bg-white p-4 rounded-lg shadow-lg mb-4">
                 <QRCodeSVG
-                  value={selectedLinks[0].shortenedUrl}
+                  value={selectedLinks[0].shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')}
                   size={200}
                   level="H"
                   includeMargin={true}
@@ -470,7 +470,7 @@ export default function LinksPage() { // Renamed component
               </div>
               <div>
                 <a href={showDetailsModal.link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb', fontWeight: 600, fontSize: 18 }}>
-                  {showDetailsModal.link.shortenedUrl.replace(/https?:\/\/.+?\//, 'UNIbee/')}
+                  {showDetailsModal.link.shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')}
                 </a>
                 <div style={{ color: '#444', fontSize: 15, marginTop: 4, wordBreak: 'break-all' }}>
                   <a href={showDetailsModal.link.originalUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#444', textDecoration: 'underline' }}>{showDetailsModal.link.originalUrl}</a>
@@ -492,7 +492,7 @@ export default function LinksPage() { // Renamed component
             <div style={{ display: 'flex', gap: 40, marginTop: 40, width: '100%' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 12 }}>QR Code</div>
-                <QRCodeSVG value={showDetailsModal.link.shortenedUrl} size={120} level="H" />
+                <QRCodeSVG value={showDetailsModal.link.shortenedUrl.replace(/https?:\/\/.+?\/s\//, 'UNIbee/')} size={120} level="H" />
                 <div style={{ marginTop: 12 }}>
                   <button
                     onClick={() => handleDeleteQr(showDetailsModal.link.shortenedUrl?.split('/').pop())}

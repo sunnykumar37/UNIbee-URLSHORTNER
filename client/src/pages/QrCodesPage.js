@@ -174,7 +174,7 @@ export default function QrCodesPage() {
               )}
               {/* Encoded value (text) as UNIbee/s/xxxxxx if it matches a short link */}
               <div style={{ fontSize: 14, color: "#2563eb", textAlign: "center", wordBreak: "break-all" }}>
-                {qr.text.match(/https?:\/\/.+?\/s\/[a-zA-Z0-9]+/) ? qr.text.replace(/https?:\/\/.+?\//, 'UNIbee/') : qr.text}
+                {qr.text.match(/https?:\/\/.+?\/s\/[a-zA-Z0-9]+/) ? qr.text.replace(/https?:\/\/.+?\/s\//, 'UNIbee/') : qr.text}
               </div>
               {/* Creation date */}
               <div style={{ fontSize: 12, color: "#999" }}>
