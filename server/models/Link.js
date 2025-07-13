@@ -10,8 +10,8 @@ const ClickSchema = new mongoose.Schema({
 const LinkSchema = new mongoose.Schema({
   title: { type: String },
   originalUrl: { type: String, required: true },
-  shortenedUrl: { type: String, required: true, unique: true },
-  shortCode: { type: String, required: true, unique: true },
+  shortenedUrl: { type: String, required: true, unique: true, index: true },
+  shortCode: { type: String, required: true, unique: true, index: true },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference to the User model

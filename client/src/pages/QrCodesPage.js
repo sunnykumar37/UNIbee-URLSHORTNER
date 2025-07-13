@@ -149,7 +149,7 @@ export default function QrCodesPage() {
           style={{
             display: "grid",
             gap: 24,
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           }}
         >
           {qrCodes.map((qr) => (
@@ -165,43 +165,89 @@ export default function QrCodesPage() {
                 alignItems: "center",
                 gap: 12,
               }}
-              id={`qr-container-${qr._id || qr.id}`}
             >
-              <QRCode
-                value={qr.text}
-                size={150}
-                level="H"
-                includeMargin
-                renderAs="canvas"
-              />
-              <div
-                style={{
-                  fontSize: 14,
-                  color: "#666",
-                  textAlign: "center",
-                  wordBreak: "break-word",
-                }}
-              >
-                {qr.text}
+              {/* QR Image from cloudinaryUrl */}
+              {qr.cloudinaryUrl ? (
+                <img src={qr.cloudinaryUrl} alt="QR Code" style={{ width: 150, height: 150 }} />
+              ) : (
+                <div style={{ width: 150, height: 150, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>No Image</div>
+              )}
+              {/* Encoded value (text) as UNIbee/s/xxxxxx if it matches a short link */}
+              <div style={{ fontSize: 14, color: "#2563eb", textAlign: "center", wordBreak: "break-all" }}>
+                {qr.text.match(/https?:\/\/.+?\/s\/[a-zA-Z0-9]+/) ? qr.text.replace(/https?:\/\/.+?\//, 'UNIbee/') : qr.text}
               </div>
+              {/* Creation date */}
               <div style={{ fontSize: 12, color: "#999" }}>
-                {new Date(qr.createdAt).toLocaleDateString()}
+                {qr.createdAt ? new Date(qr.createdAt).toLocaleDateString() : 'N/A'}
               </div>
-              <button
-                onClick={() => handleDeleteQr(qr._id || qr.id)}
-                style={{
-                  background: "#ef4444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 16px",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                Delete
-              </button>
+              {/* Download and Delete buttons */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {qr.cloudinaryUrl && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(qr.cloudinaryUrl, { mode: 'cors' });
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `qrcode-${qr._id || qr.id}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err) {
+                        alert('Failed to download QR code image.');
+                      }
+                    }}
+                    style={{
+                      background: "#2563eb",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "8px 16px",
+                      fontWeight: 500,
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Download
+                  </button>
+                )}
+                <button
+                  onClick={async () => {
+                    if (!window.confirm('Are you sure you want to delete this QR code?')) return;
+                    try {
+                      const res = await fetch(`http://localhost:5000/api/qrcodes/${qr._id || qr.id}`, {
+                        method: 'DELETE',
+                      });
+                      if (res.ok) {
+                        setQrCodes(qrCodes.filter(q => (q._id || q.id) !== (qr._id || qr.id)));
+                      } else {
+                        alert('Failed to delete QR code.');
+                      }
+                    } catch (err) {
+                      alert('Failed to delete QR code.');
+                    }
+                  }}
+                  style={{
+                    background: '#ef4444',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                    fontWeight: 500,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                  title="Delete QR Code"
+                >
+                  <span role="img" aria-label="delete">🗑️</span>
+                </button>
+              </div>
             </div>
           ))}
         </div>

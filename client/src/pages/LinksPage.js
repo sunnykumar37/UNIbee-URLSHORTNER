@@ -45,6 +45,8 @@ export default function LinksPage() { // Renamed component
   const [editModal, setEditModal] = useState({ open: false, link: null });
   const [editFields, setEditFields] = useState({ title: '', destination: '', backHalf: '' });
   const [editLoading, setEditLoading] = useState(false);
+  const [customSlug, setCustomSlug] = useState("");
+  const [error, setError] = useState("");
 
   const handleViewQr = (link) => {
     const shortCode = link.shortenedUrl?.split('/').pop();
@@ -102,6 +104,7 @@ export default function LinksPage() { // Renamed component
   const handleShortenUrl = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     const token = localStorage.getItem('token');
     if (!token) {
       setLoading(false);
@@ -109,26 +112,22 @@ export default function LinksPage() { // Renamed component
     }
     try {
       const res = await axios.post('http://localhost:5000/api/links', 
-        { originalUrl: longUrl },
+        { originalUrl: longUrl, customSlug: customSlug || undefined },
         {
           headers: {
             'x-auth-token': token
           }
         }
       );
-      
-      // Use the full shortened URL provided by the server
       const fullShortenedUrl = res.data.shortenedUrl;
-
-      // Temporarily remove fetching page title to isolate error
       const newLink = { ...res.data, shortenedUrl: fullShortenedUrl };
       setShortenedLinks([newLink, ...shortenedLinks]);
       addLink(newLink);
       setLongUrl('');
+      setCustomSlug('');
       setLoading(false);
     } catch (err) {
-      console.error('Error shortening URL:', err.response?.data || err);
-      alert(err.response?.data?.message || 'Failed to shorten URL');
+      setError(err.response?.data?.message || 'Failed to shorten URL');
       setLoading(false);
     }
   };
@@ -284,7 +283,7 @@ export default function LinksPage() { // Renamed component
         <div style={{ fontWeight: 700, fontSize: 32, color: '#222', flex: 1 }}>Unibee Links</div>
       </div>
       {/* Top bar */}
-      <form onSubmit={handleShortenUrl} style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24 }}>
+      <form onSubmit={handleShortenUrl} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch', marginBottom: 24 }}>
         <input
           type="text"
           placeholder="Search links or paste a long URL to shorten"
@@ -293,9 +292,17 @@ export default function LinksPage() { // Renamed component
           style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 16, background: '#fff' }}
           required
         />
+        <input
+          type="text"
+          placeholder="Custom Short URL (optional)"
+          value={customSlug}
+          onChange={e => setCustomSlug(e.target.value)}
+          style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: '1px solid #d1d5db', fontSize: 16, background: '#fff' }}
+        />
         <button type="submit" disabled={loading || !longUrl} style={{ marginLeft: 'auto', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 600, fontSize: 16, cursor: loading || !longUrl ? 'not-allowed' : 'pointer' }}>
           {loading ? 'Creating...' : 'Create link'}
         </button>
+        {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       </form>
       {/* Filter bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -342,6 +349,12 @@ export default function LinksPage() { // Renamed component
                   <div style={{ color: '#444', fontSize: 15, marginBottom: 8, wordBreak: 'break-all' }}>
                     <a href={link.originalUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#444', textDecoration: 'underline' }}>{link.originalUrl}</a>
                   </div>
+                  {/* QR Code */}
+                  {link.qrCode && (
+                    <div style={{ marginTop: '10px' }}>
+                      <img src={link.qrCode} alt="QR Code" style={{ width: 128, height: 128 }} />
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 18, color: '#6b7280', fontSize: 14, marginTop: 8 }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span role="img" aria-label="calendar">📅</span> {link.createdAt ? new Date(link.createdAt).toLocaleDateString() : 'N/A'}
@@ -456,7 +469,9 @@ export default function LinksPage() { // Renamed component
                 )}
               </div>
               <div>
-                <a href={showDetailsModal.link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb', fontWeight: 600, fontSize: 18 }}>{showDetailsModal.link.shortenedUrl}</a>
+                <a href={showDetailsModal.link.shortenedUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: '#2563eb', fontWeight: 600, fontSize: 18 }}>
+                  {showDetailsModal.link.shortenedUrl.replace(/https?:\/\/.+?\//, 'UNIbee/')}
+                </a>
                 <div style={{ color: '#444', fontSize: 15, marginTop: 4, wordBreak: 'break-all' }}>
                   <a href={showDetailsModal.link.originalUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#444', textDecoration: 'underline' }}>{showDetailsModal.link.originalUrl}</a>
                 </div>

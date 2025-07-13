@@ -38,6 +38,7 @@ export default function HomePage() {
     { name: "Tablet", value: 0 },
     { name: "Unknown", value: 0 },
   ]);
+  const [qrCode, setQrCode] = useState("");
 
   const fetchSummary = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -99,6 +100,7 @@ export default function HomePage() {
         );
         addLink(res.data); // Add to dashboard context
         setShortUrl(res.data.shortenedUrl); // Show the short URL
+        setQrCode(res.data.qrCode || ""); // Show the QR code if present
         setUrl(""); // Clear input
       } else if (tab === "qr") {
         // Create a new QR code in the backend
@@ -235,6 +237,11 @@ export default function HomePage() {
         {shortUrl && (
           <div style={{ color: "green", marginTop: 12 }}>
             Short URL: <a href={shortUrl} target="_blank" rel="noopener noreferrer">{shortUrl}</a>
+            {qrCode && (
+              <div style={{ marginTop: 12 }}>
+                <img src={qrCode} alt="QR Code" style={{ width: 128, height: 128 }} />
+              </div>
+            )}
           </div>
         )}
         {error && <p style={{ color: "red", marginTop: 12 }}>{error}</p>}

@@ -72,7 +72,7 @@ export default function PagesPage() {
                 gap: 12 
               }}
             >
-              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{page.name}</h3>
+              <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, color: '#222' }}>{page.name}</h3>
               <p style={{ fontSize: 14, color: '#666' }}>Created: {new Date(page.createdAt).toLocaleDateString()}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button

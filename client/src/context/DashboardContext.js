@@ -43,6 +43,20 @@ export function DashboardProvider({ children }) {
     localStorage.setItem('pages', JSON.stringify(pages));
   }, [pages]);
 
+  useEffect(() => {
+    // Fetch all QR codes from backend on mount
+    async function fetchQrCodes() {
+      try {
+        const res = await fetch('http://localhost:5000/api/qrcodes');
+        const data = await res.json();
+        setQrCodes(data);
+      } catch (err) {
+        console.error('Failed to fetch QR codes from backend:', err);
+      }
+    }
+    fetchQrCodes();
+  }, []);
+
   const addLink = (newLink) => {
     setLinks(prevLinks => {
       // Check if the link already exists to prevent duplication

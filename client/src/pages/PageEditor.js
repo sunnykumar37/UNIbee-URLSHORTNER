@@ -29,15 +29,26 @@ export default function PageEditor() {
     );
 
     if (foundLink) {
-      const newContentItem = {
+      const newContent = [...(currentPage.content || [])];
+      // Add link item
+      newContent.push({
         type: 'link',
         id: foundLink._id,
         title: foundLink.title || foundLink.originalUrl,
         shortenedUrl: foundLink.shortenedUrl,
         originalUrl: foundLink.originalUrl,
-      };
-      const updatedContent = [...(currentPage.content || []), newContentItem];
-      updatePage(currentPage.id, { content: updatedContent });
+      });
+      // Try to find corresponding QR code for this link
+      const foundQr = qrCodes.find(qr => qr.text === foundLink.shortenedUrl);
+      if (foundQr) {
+        newContent.push({
+          type: 'qrCode',
+          id: foundQr._id || foundQr.id,
+          value: foundQr.text,
+          text: foundQr.text,
+        });
+      }
+      updatePage(currentPage.id, { content: newContent });
       setLinkInput('');
     } else {
       setLinkError('Link not found. Please ensure it\'s a valid Unibee link.');
@@ -112,25 +123,7 @@ export default function PageEditor() {
           {linkError && <p style={{ color: 'red', marginTop: 8 }}>{linkError}</p>}
         </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <h4 style={{ fontWeight: 500, fontSize: 16, marginBottom: 8 }}>Add QR Code</h4>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="text"
-              placeholder="Enter QR code text or URL"
-              value={qrCodeInput}
-              onChange={(e) => setQrCodeInput(e.target.value)}
-              style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc' }}
-            />
-            <button
-              onClick={handleAddQrCodeToPage}
-              style={{ padding: '8px 16px', borderRadius: 6, background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer' }}
-            >
-              Add QR Code
-            </button>
-          </div>
-          {qrCodeError && <p style={{ color: 'red', marginTop: 8 }}>{qrCodeError}</p>}
-        </div>
+        {/* Remove the Add QR Code input for links */}
 
         <h3 style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Content on this Page</h3>
         {(currentPage.content && currentPage.content.length > 0) ? (

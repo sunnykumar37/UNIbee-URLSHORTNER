@@ -15,6 +15,9 @@ const QrCode = require("./models/QrCode");
 const { isAuthenticated } = require("./middleware/auth");
 const app = express();
 const router = express.Router();
+const Analytics = require('./models/Analytics');
+const UAParser = require('ua-parser-js');
+const fetch = require('node-fetch');
 
 app.use(cookieParser());
 app.use(passport.initialize());
@@ -50,6 +53,7 @@ mongoose
 // 🔐 Auth & Link Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/links", require("./routes/links"));
+app.use('/api/analytics', require('./routes/analytics'));
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -126,6 +130,41 @@ app.get("/s/:shortCode", async (req, res) => {
       return res.status(410).send("This link has expired or is inactive");
     }
 
+    // --- Analytics logging ---
+    (async () => {
+      try {
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const referrer = req.headers['referer'] || null;
+        const userAgent = req.headers['user-agent'] || '';
+        const parser = new UAParser(userAgent);
+        const deviceType = parser.getDevice().type || 'desktop';
+        let country = '', city = '';
+        try {
+          const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+          const geo = await geoRes.json();
+          country = geo.country_name || '';
+          city = geo.city || '';
+        } catch (geoErr) {
+          console.error('Geo lookup failed:', geoErr);
+        }
+        await Analytics.create({
+          slug: shortCode,
+          urlId: link._id,
+          timestamp: Date.now(),
+          ip,
+          referrer,
+          deviceType,
+          userAgent,
+          country,
+          city,
+        });
+        console.log('Analytics logging SUCCESS for', shortCode);
+      } catch (analyticsErr) {
+        console.error('Analytics logging failed:', analyticsErr);
+      }
+    })();
+    // --- End analytics logging ---
+
     const deviceType = req.useragent.isMobile ? "mobile" : "desktop";
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
@@ -169,10 +208,21 @@ app.delete('/api/qrcodes/:id', async (req, res) => {
   }
 });
 
-// 🌐 Serve React Frontend (should be last)
-app.use(express.static(path.join(__dirname, "../client/build")));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/build", "index.html"));
+app.get('/test-analytics', async (req, res) => {
+  try {
+    await Analytics.create({ slug: 'test', timestamp: Date.now() });
+    res.send('Analytics test written');
+  } catch (err) {
+    res.status(500).send('Failed to write analytics: ' + err.message);
+  }
 });
+
+// 🌐 Serve React Frontend (should be last)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client', 'build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+  });
+}
 
 //don

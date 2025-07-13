@@ -17,6 +17,7 @@ export default function AnalyticsPage() {
   const [deviceData, setDeviceData] = useState([]);
   const [overTimeData, setOverTimeData] = useState([]);
   const [topDate, setTopDate] = useState(null);
+  const [analytics, setAnalytics] = useState([]);
 
   useEffect(() => {
     const fetchDeviceData = async () => {
@@ -55,6 +56,19 @@ export default function AnalyticsPage() {
       }
     };
     fetchOverTimeData();
+  }, []);
+
+  useEffect(() => {
+    // Fetch new analytics data from backend
+    async function fetchAnalytics() {
+      try {
+        const res = await axios.get('http://localhost:5000/api/analytics');
+        setAnalytics(res.data);
+      } catch (err) {
+        setAnalytics([]);
+      }
+    }
+    fetchAnalytics();
   }, []);
 
   const handleDownload = (data, filename) => {
@@ -198,6 +212,42 @@ export default function AnalyticsPage() {
               <Legend align="right" verticalAlign="middle" layout="vertical" />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+      {/* Add analytics table */}
+      <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px #0001', padding: 24, marginTop: 32 }}>
+        <h3 style={{ fontWeight: 600, fontSize: 18, color: '#222', marginBottom: 16 }}>Raw Analytics Data</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+            <thead>
+              <tr style={{ background: '#f3f4f6' }}>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Slug</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Timestamp</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Device</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Country</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>City</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Referrer</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>User Agent</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(!Array.isArray(analytics) || analytics.length === 0) ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 16 }}>No analytics data found.</td></tr>
+              ) : (
+                analytics.map(a => (
+                  <tr key={a._id}>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.slug}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.timestamp ? new Date(a.timestamp).toLocaleString() : ''}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.deviceType}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.country}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.city}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.referrer}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#222' }}>{a.userAgent}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

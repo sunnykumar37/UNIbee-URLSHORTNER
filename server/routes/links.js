@@ -5,12 +5,17 @@ const { isAuthenticated } = require('../middleware/auth');
 const geoip = require('geoip-lite');
 const UAParser = require('ua-parser-js');
 const QRCode = require('../models/QRCode');
+const QRCodeLib = require('qrcode'); // Add this import for QR code generation
+const { v2: cloudinary } = require('cloudinary');
+const stream = require('stream');
+const Analytics = require('../models/Analytics');
+const fetch = require('node-fetch');
 
 // Create a new shortened URL
 router.post('/', isAuthenticated, async (req, res) => {
   try {
     console.log('Attempting to shorten URL...');
-    const { originalUrl, title } = req.body;
+    const { originalUrl, title, customSlug } = req.body;
     console.log('Original URL:', originalUrl, 'Title:', title);
     console.log('User ID from token:', req.user);
 
@@ -18,7 +23,17 @@ router.post('/', isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: 'Original URL is required.' });
     }
 
-    const shortCode = Math.random().toString(36).substring(2, 8);
+    let shortCode;
+    if (customSlug) {
+      // Validate custom slug uniqueness
+      const existing = await Link.findOne({ shortCode: customSlug });
+      if (existing) {
+        return res.status(400).json({ message: 'This slug is already taken.' });
+      }
+      shortCode = customSlug;
+    } else {
+      shortCode = Math.random().toString(36).substring(2, 8);
+    }
     console.log('Generated short code:', shortCode);
 
     if (!process.env.BASE_URL) {
@@ -28,19 +43,55 @@ router.post('/', isAuthenticated, async (req, res) => {
     const shortenedUrl = `${process.env.BASE_URL}/s/${shortCode}`;
     console.log('Generated shortened URL:', shortenedUrl);
 
+    // Generate QR code as base64 image
+    let qrCodeBase64 = null;
+    try {
+      qrCodeBase64 = await QRCodeLib.toDataURL(shortenedUrl);
+    } catch (qrErr) {
+      console.error('Error generating QR code:', qrErr);
+      // Continue without QR if it fails
+    }
+
     const link = new Link({
       originalUrl,
       shortenedUrl,
       shortCode,
       title,
-      user: req.user,
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes from now
+      user: req.user
+      // No expiresAt field, so links never expire
     });
     console.log('Link object created:', link);
 
     await link.save();
     console.log('Link saved successfully.');
-    res.json(link);
+
+    // Also create a QR code entry for this short link (if not already exists)
+    try {
+      const existingQr = await QRCode.findOne({ text: shortenedUrl, user: req.user });
+      if (!existingQr) {
+        // Convert base64 QR code to buffer
+        if (qrCodeBase64) {
+          const base64Data = qrCodeBase64.replace(/^data:image\/png;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          // Upload to Cloudinary
+          const uploadResult = await new Promise((resolve, reject) => {
+            const passthrough = new stream.PassThrough();
+            passthrough.end(buffer);
+            cloudinary.uploader.upload_stream({ resource_type: 'image' }, (err, result) => {
+              if (err) return reject(err);
+              resolve(result);
+            }).end(buffer);
+          });
+          await QRCode.create({ user: req.user, text: shortenedUrl, cloudinaryUrl: uploadResult.secure_url, createdAt: new Date() });
+        } else {
+          await QRCode.create({ user: req.user, text: shortenedUrl, cloudinaryUrl: '', createdAt: new Date() });
+        }
+      }
+    } catch (qrSaveErr) {
+      console.error('Error saving QR code for short link:', qrSaveErr);
+    }
+
+    res.json({ ...link.toObject(), qrCode: qrCodeBase64 }); // Return QR code in response
   } catch (err) {
     console.error('Error creating link:', err);
     res.status(500).json({ message: err.message || 'Server error' });
@@ -52,7 +103,17 @@ router.get('/', isAuthenticated, async (req, res) => {
   try {
     console.log('Fetching links for user:', req.user);
     const links = await Link.find({ user: req.user });
-    res.json(links);
+    // Generate QR code for each link
+    const linksWithQr = await Promise.all(
+      links.map(async (link) => {
+        let qrCode = '';
+        try {
+          qrCode = await QRCodeLib.toDataURL(link.shortenedUrl);
+        } catch (e) {}
+        return { ...link.toObject(), qrCode };
+      })
+    );
+    res.json(linksWithQr);
   } catch (err) {
     console.error('Error getting links:', err);
     res.status(500).json({ message: 'Server error' });
@@ -133,7 +194,43 @@ router.get('/s/:shortCode', async (req, res) => {
       return res.status(410).json({ message: 'Link has expired' });
     }
 
-    // Record click analytics
+    // --- Analytics logging ---
+    (async () => {
+      try {
+        console.log('Analytics logging START for', req.params.shortCode);
+        const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const referrer = req.headers.referer || null;
+        const userAgent = req.headers['user-agent'] || '';
+        const parser = new UAParser(userAgent);
+        const deviceType = parser.getDevice().type || 'desktop';
+        let country = '', city = '';
+        try {
+          const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+          const geo = await geoRes.json();
+          country = geo.country_name || '';
+          city = geo.city || '';
+        } catch (geoErr) {
+          console.error('Geo lookup failed:', geoErr);
+        }
+        await Analytics.create({
+          slug: req.params.shortCode,
+          urlId: link._id,
+          timestamp: Date.now(),
+          ip,
+          referrer,
+          deviceType,
+          userAgent,
+          country,
+          city,
+        });
+        console.log('Analytics logging SUCCESS for', req.params.shortCode);
+      } catch (analyticsErr) {
+        console.error('Analytics logging failed:', analyticsErr);
+      }
+    })();
+    // --- End analytics logging ---
+
+    // Record click analytics (legacy)
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const geo = geoip.lookup(ip);
     const ua = new UAParser(req.headers['user-agent']);

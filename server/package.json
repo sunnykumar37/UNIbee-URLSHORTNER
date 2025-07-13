@@ -27,6 +27,7 @@
     "mongoose": "^8.16.0",
     "multer": "^2.0.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-fetch": "^2.7.0",
     "npm": "^11.4.2",
     "passport": "^0.7.0",
     "passport-azure-ad": "^4.3.5",
