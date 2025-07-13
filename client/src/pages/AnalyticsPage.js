@@ -104,6 +104,16 @@ export default function AnalyticsPage() {
     }
   };
 
+  const handleDeleteAnalytics = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this analytics entry?')) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/analytics/${id}`);
+      setAnalytics(prev => prev.filter(a => a._id !== id));
+    } catch (err) {
+      alert('Failed to delete analytics entry.');
+    }
+  };
+
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24, background: '#f7f9fb', minHeight: '100vh' }}>
       <div style={{ fontWeight: 700, fontSize: 32, marginBottom: 24, color: '#222' }}>Analytics</div>
@@ -228,11 +238,12 @@ export default function AnalyticsPage() {
                 <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>City</th>
                 <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Referrer</th>
                 <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>User Agent</th>
+                <th style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>Delete</th>
               </tr>
             </thead>
             <tbody>
               {(!Array.isArray(analytics) || analytics.length === 0) ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 16 }}>No analytics data found.</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 16 }}>No analytics data found.</td></tr>
               ) : (
                 analytics.map(a => (
                   <tr key={a._id}>
@@ -243,6 +254,13 @@ export default function AnalyticsPage() {
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.city}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#222' }}>{a.referrer}</td>
                     <td style={{ padding: 8, border: '1px solid #e5e7eb', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#222' }}>{a.userAgent}</td>
+                    <td style={{ padding: 8, border: '1px solid #e5e7eb', color: '#e53935', textAlign: 'center' }}>
+                      <button onClick={() => handleDeleteAnalytics(a._id)} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
